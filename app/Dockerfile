@@ -7,6 +7,10 @@ COPY . .
 FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
+
+# Alpine ke system packages latest security patches ke saath update karo
+RUN apk update && apk upgrade --no-cache
+
 COPY --from=build /app /app
 
 RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx \
