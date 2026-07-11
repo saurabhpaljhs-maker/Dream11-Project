@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-mega-app
+  namespace: default
+  labels:
+    app: devops-mega-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: devops-mega-app
+  template:
+    metadata:
+      labels:
+        app: devops-mega-app
+    spec:
+      containers:
+        - name: devops-mega-app
+          image: yourdockerhubuser/devops-mega-app:latest   # <- Jenkins/ArgoCD updates this tag
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20

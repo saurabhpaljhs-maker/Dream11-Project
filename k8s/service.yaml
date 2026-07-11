@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: devops-mega-app-svc
+  namespace: default
+spec:
+  type: LoadBalancer
+  selector:
+    app: devops-mega-app
+  ports:
+    - port: 80
+      targetPort: 3000

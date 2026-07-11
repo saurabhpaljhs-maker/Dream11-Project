@@ -1,0 +1,131 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME       = "devops-mega-app"
+        DOCKERHUB_REPO = "yourdockerhubuser/${APP_NAME}"
+        IMAGE_TAG      = "${env.BUILD_NUMBER}"
+        SONAR_HOME     = tool "SonarScanner"
+        GITOPS_REPO    = "git@github.com:yourgithubuser/devops-mega-gitops.git"
+    }
+
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
+    stages {
+
+        stage('1. Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('2. Install & Unit Test') {
+            steps {
+                dir('app') {
+                    sh 'npm ci'
+                    sh 'npm test'
+                }
+            }
+        }
+
+        stage('3. DevSecOps - Code Quality (Sonar)') {
+            steps {
+                withSonarQubeEnv('sonar-server') {
+                    sh "${SONAR_HOME}/bin/sonar-scanner -Dproject.settings=security/sonar-project.properties"
+                }
+            }
+        }
+
+        stage('3. DevSecOps - Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('3. DevSecOps - OWASP Dependency Check') {
+            steps {
+                dir('app') {
+                    dependencyCheck additionalArguments: '--suppression ../security/owasp-suppressions.xml --scan .',
+                                     odcInstallation: 'OWASP-DC'
+                    dependencyCheckPublisher pattern: 'dependency-check-report.xml'
+                }
+            }
+        }
+
+        stage('3. DevSecOps - Trivy Filesystem Scan') {
+            steps {
+                sh 'trivy fs --config security/trivy.yaml app/'
+            }
+        }
+
+        stage('3. Docker Build') {
+            steps {
+                dir('app') {
+                    sh "docker build -t ${DOCKERHUB_REPO}:${IMAGE_TAG} ."
+                }
+            }
+        }
+
+        stage('3. DevSecOps - Trivy Image Scan') {
+            steps {
+                sh "trivy image --config security/trivy.yaml ${DOCKERHUB_REPO}:${IMAGE_TAG}"
+            }
+        }
+
+        stage('3. Docker Push') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
+                                                   usernameVariable: 'DOCKER_USER',
+                                                   passwordVariable: 'DOCKER_PASS')]) {
+                    sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
+                    sh "docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}"
+                }
+            }
+        }
+
+        stage('5. GitOps - Update Manifest & Push') {
+            steps {
+                withCredentials([sshUserPrivateKey(credentialsId: 'gitops-ssh-key', keyFileVariable: 'SSH_KEY')]) {
+                    sh '''
+                        export GIT_SSH_COMMAND="ssh -i $SSH_KEY -o StrictHostKeyChecking=no"
+                        rm -rf gitops-repo
+                        git clone $GITOPS_REPO gitops-repo
+                        cd gitops-repo
+                        sed -i "s|image: .*|image: ${DOCKERHUB_REPO}:${IMAGE_TAG}|g" k8s/deployment.yaml
+                        git config user.email "jenkins@devops-mega.local"
+                        git config user.name "jenkins-ci"
+                        git commit -am "ci: deploy ${APP_NAME} build ${IMAGE_TAG}" || echo "nothing to commit"
+                        git push origin main
+                    '''
+                }
+            }
+        }
+
+        stage('5. GitOps - ArgoCD Sync') {
+            steps {
+                // ArgoCD watches the gitops repo and auto-syncs, but we also
+                // trigger explicitly so the pipeline waits for a healthy rollout.
+                withCredentials([string(credentialsId: 'argocd-auth-token', variable: 'ARGOCD_TOKEN')]) {
+                    sh '''
+                        argocd app sync ${APP_NAME} --auth-token $ARGOCD_TOKEN --server argocd.devops-mega.local
+                        argocd app wait ${APP_NAME} --auth-token $ARGOCD_TOKEN --server argocd.devops-mega.local --health
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline succeeded - build ${IMAGE_TAG} deployed via ArgoCD. Check Grafana dashboards."
+        }
+        failure {
+            echo "Pipeline failed - check the DevSecOps stage logs above for the gate that blocked it."
+        }
+    }
+}

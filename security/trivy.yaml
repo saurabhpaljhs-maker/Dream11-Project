@@ -1,0 +1,8 @@
+# Trivy config used by the Jenkins pipeline (both filesystem + image scans)
+severity:
+  - HIGH
+  - CRITICAL
+exit-code: 1          # fail the Jenkins stage if HIGH/CRITICAL found
+ignore-unfixed: true  # don't fail the build for CVEs with no fix available yet
+format: table
+timeout: 5m
