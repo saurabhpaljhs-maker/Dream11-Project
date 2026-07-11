@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+     label 'docker-agent' }
 
     environment {
         APP_NAME        = "devops-mega-app"
