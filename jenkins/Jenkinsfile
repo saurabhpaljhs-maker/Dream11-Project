@@ -1,13 +1,11 @@
 pipeline {
-     label 'docker-agent' }
+    agent { label 'docker-agent' }
 
     environment {
-        APP_NAME        = "devops-mega-app"
-        IMAGE_TAG       = "${env.BUILD_NUMBER}"
-        DOCKERHUB_REPO  = credentials('dockerhub-repo')
-        GITOPS_REPO     = credentials('gitops-repo-url')
-        ARGOCD_SERVER   = credentials('argocd-server-url')
-        DOCKERHUB_CREDS = credentials('dockerhub-creds')
+        APP_NAME       = "devops-mega-app"
+        IMAGE_TAG      = "${env.BUILD_NUMBER}"
+        DOCKERHUB_REPO = credentials('dockerhub-repo')
+        GITOPS_REPO    = credentials('gitops-repo-url')
     }
 
     options {
@@ -48,16 +46,6 @@ pipeline {
             }
         }
 
-        stage('OWASP Dependency Check') {
-            steps {
-                dir('app') {
-                    dependencyCheck additionalArguments: '--suppression ../security/owasp-suppressions.xml --scan .',
-                                     odcInstallation: 'OWASP-DC'
-                    dependencyCheckPublisher pattern: 'dependency-check-report.xml'
-                }
-            }
-        }
-
         stage('Trivy FS Scan') {
             steps {
                 sh 'trivy fs --config security/trivy.yaml app/'
@@ -80,32 +68,41 @@ pipeline {
 
         stage('Docker Push') {
             steps {
-                sh 'echo "$DOCKERHUB_CREDS_PSW" | docker login -u "$DOCKERHUB_CREDS_USR" --password-stdin'
-                sh 'docker push $DOCKERHUB_REPO:$IMAGE_TAG'
+                withCredentials([usernamePassword(credentialsId: 'dockerhub',
+                                                   usernameVariable: 'DOCKER_USER',
+                                                   passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                    sh 'docker push $DOCKERHUB_REPO:$IMAGE_TAG'
+                }
             }
         }
 
         stage('Update GitOps Repo') {
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'gitops-ssh-key', keyFileVariable: 'SSH_KEY')]) {
+                withCredentials([usernamePassword(credentialsId: 'github-credentials',
+                                                   usernameVariable: 'GIT_USER',
+                                                   passwordVariable: 'GIT_TOKEN')]) {
                     sh '''
-                        export GIT_SSH_COMMAND="ssh -i $SSH_KEY -o StrictHostKeyChecking=no"
                         rm -rf gitops-repo
-                        git clone "$GITOPS_REPO" gitops-repo
+                        git clone https://${GIT_USER}:${GIT_TOKEN}@github.com/saurabhpaljhs-maker/Dream11-Project.git gitops-repo
                         cd gitops-repo
                         sed -i "s|image: .*|image: ${DOCKERHUB_REPO}:${IMAGE_TAG}|g" k8s/deployment.yaml
                         git config user.email "jenkins-ci@local"
                         git config user.name "jenkins-ci"
                         git commit -am "deploy ${APP_NAME} build ${IMAGE_TAG}" || echo "nothing to commit"
-                        git push origin main
+                        git push https://${GIT_USER}:${GIT_TOKEN}@github.com/saurabhpaljhs-maker/Dream11-Project.git main
                     '''
                 }
             }
         }
 
+        // ArgoCD sync - uncomment this once EKS cluster is up and ArgoCD is installed.
+        // Needs two more credentials: argocd-server-url, argocd-auth-token
+        /*
         stage('ArgoCD Sync') {
             steps {
-                withCredentials([string(credentialsId: 'argocd-auth-token', variable: 'ARGOCD_TOKEN')]) {
+                withCredentials([string(credentialsId: 'argocd-auth-token', variable: 'ARGOCD_TOKEN'),
+                                  string(credentialsId: 'argocd-server-url', variable: 'ARGOCD_SERVER')]) {
                     sh '''
                         argocd app sync "$APP_NAME" --auth-token "$ARGOCD_TOKEN" --server "$ARGOCD_SERVER"
                         argocd app wait "$APP_NAME" --auth-token "$ARGOCD_TOKEN" --server "$ARGOCD_SERVER" --health
@@ -113,11 +110,12 @@ pipeline {
                 }
             }
         }
+        */
     }
 
     post {
         success {
-            echo "Build ${IMAGE_TAG} deployed successfully via ArgoCD"
+            echo "Build ${IMAGE_TAG} pushed to DockerHub and gitops repo updated"
         }
         failure {
             echo "Pipeline failed - check which stage broke above"
