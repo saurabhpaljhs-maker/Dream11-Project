@@ -9,6 +9,10 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app /app
 
+# npm sirf build stage ke liye chahiye tha, runtime me zarurat nahi -
+# hata dene se attack surface aur image size dono kam hote hain
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
