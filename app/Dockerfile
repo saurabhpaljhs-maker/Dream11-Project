@@ -1,17 +1,14 @@
-# ---- Build stage ----
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts
 COPY . .
 
-# ---- Runtime stage ----
 FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app /app
 
-# Run as non-root (security best practice - keeps Trivy/OWASP checks happy)
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
