@@ -17,4 +17,8 @@ app.get("/api/status", (req, res) => {
 app.get("/health", (req, res) => res.status(200).send("OK"));
 app.get("/ready", (req, res) => res.status(200).send("READY"));
 
-app.listen(PORT, () => console.log(`App listening on port ${PORT}`));
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`App listening on port ${PORT}`));
+}
+
+module.exports = app;
