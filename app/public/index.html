@@ -6,72 +6,263 @@
 <title>Dream11 Mega Project</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
-  body {
-    background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 50%, #0d1b2a 100%);
-    color: #fff;
-    min-height: 100vh;
+  body { background: #0b0f1a; color: #fff; padding-bottom: 90px; }
+
+  header {
+    background: linear-gradient(135deg, #7b0d1e 0%, #e4002b 100%);
+    padding: 16px 20px 20px;
+  }
+  .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .brand { font-size: 20px; font-weight: 900; letter-spacing: 1px; }
+  .brand span { color: #ffe14d; }
+  .live-pill {
+    background: rgba(0,0,0,0.25); font-size: 11px; padding: 4px 10px; border-radius: 999px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .live-dot { width: 6px; height: 6px; background: #4ade80; border-radius: 50%; animation: pulse 1.4s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  .match-card {
+    background: rgba(255,255,255,0.1);
+    border-radius: 14px;
+    padding: 16px;
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    padding: 20px;
   }
-  .logo { font-size: 48px; font-weight: 900; letter-spacing: 2px; margin-bottom: 8px; }
-  .logo span { color: #e4002b; }
-  .tagline { color: #94a3b8; margin-bottom: 40px; font-size: 14px; letter-spacing: 3px; text-transform: uppercase; }
-  .card {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 16px;
-    padding: 32px 40px;
-    backdrop-filter: blur(10px);
-    max-width: 480px;
-    width: 100%;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  .team-block { text-align: center; flex: 1; }
+  .team-badge {
+    width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 15px;
   }
-  .status-badge {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: rgba(34,197,94,0.35); color: #052e16;
-    padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; margin-bottom: 20px;
+  .badge-blue { background: #1d4ed8; }
+  .badge-gold { background: #b45309; }
+  .team-name { font-size: 12px; opacity: 0.85; }
+  .vs { font-size: 13px; font-weight: 700; opacity: 0.7; padding: 0 10px; }
+  .match-meta { text-align: center; font-size: 11px; opacity: 0.75; margin-top: 10px; }
+
+  .credits-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 20px; background: #151b2b; border-bottom: 1px solid #232b40;
   }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; animation: pulse 1.5s infinite; }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-  .info-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14px; }
-  .info-row:last-child { border-bottom: none; }
-  .info-label { color: #94a3b8; }
-  .info-value { color: #f8fafc; font-family: 'Courier New', monospace; font-weight: 600; }
-  .pipeline { margin-top: 28px; display: flex; justify-content: space-between; gap: 4px; }
-  .stage { flex: 1; text-align: center; font-size: 10px; color: #64748b; }
-  .stage-dot { width: 10px; height: 10px; background: #4ade80; border-radius: 50%; margin: 0 auto 6px; }
-  .footer { margin-top: 24px; font-size: 12px; color: #94a3b8; text-align: center; }
+  .credits-left { font-size: 13px; color: #94a3b8; }
+  .credits-value { font-size: 20px; font-weight: 800; color: #ffe14d; margin-left: 6px; }
+  .selected-count { font-size: 13px; color: #94a3b8; }
+  .selected-count b { color: #4ade80; }
+
+  .role-tabs {
+    display: flex; gap: 8px; padding: 12px 20px; overflow-x: auto;
+    background: #0b0f1a; position: sticky; top: 0; z-index: 5;
+  }
+  .role-tab {
+    background: #1a2236; border: 1px solid #2a3450; color: #94a3b8;
+    padding: 8px 16px; border-radius: 999px; font-size: 12px; font-weight: 700;
+    white-space: nowrap; cursor: pointer;
+  }
+  .role-tab.active { background: #e4002b; border-color: #e4002b; color: #fff; }
+
+  .players { padding: 8px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+  .player-card {
+    background: #151b2b; border: 1px solid #232b40; border-radius: 12px;
+    padding: 14px; display: flex; align-items: center; gap: 12px;
+    cursor: pointer; transition: border-color 0.15s;
+  }
+  .player-card.selected { border-color: #4ade80; background: #16241c; }
+
+  .avatar {
+    width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, #334155, #1e293b);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 15px; color: #94a3b8;
+  }
+  .player-info { flex: 1; }
+  .player-name { font-size: 14px; font-weight: 700; }
+  .player-meta { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+  .player-points { font-size: 11px; color: #4ade80; margin-top: 2px; }
+
+  .player-right { text-align: right; }
+  .player-credits { font-size: 14px; font-weight: 800; color: #ffe14d; }
+  .select-check {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid #475569;
+    margin-top: 6px; margin-left: auto;
+    display: flex; align-items: center; justify-content: center; font-size: 12px;
+  }
+  .player-card.selected .select-check { background: #4ade80; border-color: #4ade80; color: #052e16; }
+
+  .cvc-panel {
+    padding: 16px 20px; text-align: center;
+  }
+  .cvc-panel h3 { font-size: 14px; margin-bottom: 4px; }
+  .cvc-panel p { font-size: 11px; color: #94a3b8; margin-bottom: 12px; }
+
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #151b2b; border-top: 1px solid #232b40;
+    padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .bottom-progress { font-size: 12px; color: #94a3b8; }
+  .bottom-progress b { color: #fff; font-size: 15px; }
+  .save-btn {
+    background: linear-gradient(135deg, #e4002b, #ff4d6a);
+    border: none; color: #fff; font-weight: 800; font-size: 13px;
+    padding: 12px 28px; border-radius: 10px; cursor: pointer;
+  }
+  .save-btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+
+  .footer-note {
+    text-align: center; font-size: 11px; color: #475569; padding: 20px;
+  }
+  .pipeline-strip {
+    display: flex; justify-content: center; gap: 16px; padding: 10px 20px 0;
+  }
+  .pipeline-strip span { font-size: 10px; color: #64748b; display: flex; align-items: center; gap: 4px; }
+  .pipeline-strip .d { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; }
 </style>
 </head>
 <body>
-  <div class="logo">DREAM<span>11</span> MEGA PROJECT</div>
-  <div class="tagline">DevSecOps · GitOps · Kubernetes</div>
 
-  <div class="card">
-    <div class="status-badge"><span class="dot"></span> LIVE ON EKS</div>
-    <div class="info-row"><span class="info-label">Serving Pod</span><span class="info-value" id="pod">-</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="version">-</span></div>
-    <div class="info-row"><span class="info-label">Deployed via</span><span class="info-value">ArgoCD (GitOps)</span></div>
-    <div class="info-row"><span class="info-label">Cluster</span><span class="info-value">Amazon EKS</span></div>
-    <div class="pipeline">
-      <div class="stage"><div class="stage-dot"></div>Sonar</div>
-      <div class="stage"><div class="stage-dot"></div>Trivy</div>
-      <div class="stage"><div class="stage-dot"></div>Docker</div>
-      <div class="stage"><div class="stage-dot"></div>GitOps</div>
-      <div class="stage"><div class="stage-dot"></div>ArgoCD</div>
-      <div class="stage"><div class="stage-dot"></div>Grafana</div>
+<header>
+  <div class="top-row">
+    <div class="brand">DREAM<span>11</span> MEGA</div>
+    <div class="live-pill"><span class="live-dot"></span> LIVE ON EKS</div>
+  </div>
+  <div class="match-card">
+    <div class="team-block">
+      <div class="team-badge badge-blue">IND</div>
+      <div class="team-name">India</div>
+    </div>
+    <div class="vs">VS</div>
+    <div class="team-block">
+      <div class="team-badge badge-gold">AUS</div>
+      <div class="team-name">Australia</div>
     </div>
   </div>
-  <div class="footer">Built with Jenkins &middot; SonarCloud &middot; Trivy &middot; ArgoCD &middot; Prometheus &middot; Grafana</div>
+  <div class="match-meta">T20 &middot; Create Your Team &middot; Pod: <span id="podName">-</span></div>
+</header>
 
-  <script>
-    fetch('/api/status').then(r => r.json()).then(d => {
-      document.getElementById('pod').textContent = d.pod;
-      document.getElementById('version').textContent = d.version;
+<div class="credits-bar">
+  <div class="credits-left">Credits Left<span class="credits-value" id="creditsLeft">100.0</span></div>
+  <div class="selected-count">Players <b id="selCount">0</b>/11</div>
+</div>
+
+<div class="role-tabs">
+  <div class="role-tab active" data-role="all">ALL</div>
+  <div class="role-tab" data-role="WK">WK</div>
+  <div class="role-tab" data-role="BAT">BAT</div>
+  <div class="role-tab" data-role="AR">ALL-ROUNDER</div>
+  <div class="role-tab" data-role="BOWL">BOWL</div>
+</div>
+
+<div class="players" id="playerList"></div>
+
+<div class="footer-note">
+  <div class="pipeline-strip">
+    <span><span class="d"></span>Sonar</span>
+    <span><span class="d"></span>Trivy</span>
+    <span><span class="d"></span>Docker</span>
+    <span><span class="d"></span>GitOps</span>
+    <span><span class="d"></span>ArgoCD</span>
+    <span><span class="d"></span>Grafana</span>
+  </div>
+  <div style="margin-top:10px">Built with Jenkins &middot; SonarCloud &middot; Trivy &middot; ArgoCD &middot; Prometheus &middot; Grafana</div>
+</div>
+
+<div class="bottom-bar">
+  <div class="bottom-progress"><b id="bottomCount">0</b>/11 selected</div>
+  <button class="save-btn" id="saveBtn" disabled>SAVE TEAM</button>
+</div>
+
+<script>
+const players = [
+  { name: "R. Sharma", role: "BAT", team: "IND", credits: 9.5, points: 412, initials: "RS" },
+  { name: "D. Warner", role: "BAT", team: "AUS", credits: 9.0, points: 388, initials: "DW" },
+  { name: "V. Kohli", role: "BAT", team: "IND", credits: 10.0, points: 455, initials: "VK" },
+  { name: "S. Smith", role: "BAT", team: "AUS", credits: 8.5, points: 341, initials: "SS" },
+  { name: "R. Pant", role: "WK", team: "IND", credits: 8.5, points: 356, initials: "RP" },
+  { name: "A. Carey", role: "WK", team: "AUS", credits: 7.5, points: 289, initials: "AC" },
+  { name: "H. Pandya", role: "AR", team: "IND", credits: 9.0, points: 378, initials: "HP" },
+  { name: "M. Marsh", role: "AR", team: "AUS", credits: 8.0, points: 312, initials: "MM" },
+  { name: "R. Jadeja", role: "AR", team: "IND", credits: 8.5, points: 340, initials: "RJ" },
+  { name: "J. Bumrah", role: "BOWL", team: "IND", credits: 9.0, points: 401, initials: "JB" },
+  { name: "P. Cummins", role: "BOWL", team: "AUS", credits: 8.5, points: 366, initials: "PC" },
+  { name: "M. Starc", role: "BOWL", team: "AUS", credits: 8.5, points: 359, initials: "MS" },
+  { name: "Kuldeep Y.", role: "BOWL", team: "IND", credits: 8.0, points: 298, initials: "KY" },
+  { name: "S. Yadav", role: "BAT", team: "IND", credits: 9.0, points: 366, initials: "SY" },
+];
+
+let selected = new Set();
+let activeRole = "all";
+const TOTAL_CREDITS = 100;
+
+function render() {
+  const list = document.getElementById("playerList");
+  list.innerHTML = "";
+  players
+    .filter(p => activeRole === "all" || p.role === activeRole)
+    .forEach((p, idx) => {
+      const isSel = selected.has(p.name);
+      const card = document.createElement("div");
+      card.className = "player-card" + (isSel ? " selected" : "");
+      card.innerHTML = `
+        <div class="avatar">${p.initials}</div>
+        <div class="player-info">
+          <div class="player-name">${p.name} <span style="color:#64748b;font-weight:400">&middot; ${p.team}</span></div>
+          <div class="player-meta">${p.role}</div>
+          <div class="player-points">${p.points} pts</div>
+        </div>
+        <div class="player-right">
+          <div class="player-credits">${p.credits.toFixed(1)} Cr</div>
+          <div class="select-check">${isSel ? "&#10003;" : "+"}</div>
+        </div>
+      `;
+      card.addEventListener("click", () => toggle(p.name));
+      list.appendChild(card);
     });
-  </script>
+  updateSummary();
+}
+
+function toggle(name) {
+  const p = players.find(x => x.name === name);
+  if (selected.has(name)) {
+    selected.delete(name);
+  } else {
+    if (selected.size >= 11) return;
+    const used = [...selected].reduce((s, n) => s + players.find(x => x.name === n).credits, 0);
+    if (used + p.credits > TOTAL_CREDITS) return;
+    selected.add(name);
+  }
+  render();
+}
+
+function updateSummary() {
+  const used = [...selected].reduce((s, n) => s + players.find(x => x.name === n).credits, 0);
+  document.getElementById("creditsLeft").textContent = (TOTAL_CREDITS - used).toFixed(1);
+  document.getElementById("selCount").textContent = selected.size;
+  document.getElementById("bottomCount").textContent = selected.size;
+  const btn = document.getElementById("saveBtn");
+  btn.disabled = selected.size !== 11;
+}
+
+document.querySelectorAll(".role-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".role-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    activeRole = tab.dataset.role;
+    render();
+  });
+});
+
+document.getElementById("saveBtn").addEventListener("click", () => {
+  alert("Team saved! (This is a portfolio demo - deployed via ArgoCD on EKS)");
+});
+
+fetch('/api/status').then(r => r.json()).then(d => {
+  document.getElementById("podName").textContent = d.pod.split("-").slice(-1)[0];
+});
+
+render();
+</script>
 </body>
 </html>
