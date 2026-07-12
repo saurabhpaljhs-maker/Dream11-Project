@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: devops-mega-app
-          image: sauraabh/devops-mega-app:25
+          image: sauraabh/devops-mega-app:26
           ports:
             - containerPort: 3000
           resources:
