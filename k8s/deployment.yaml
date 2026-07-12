@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: devops-mega-app
-          image: yourdockerhubuser/devops-mega-app:latest   # <- Jenkins/ArgoCD updates this tag
+          image: sauraabh/devops-mega-app:15
           ports:
             - containerPort: 3000
           resources:
