@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dream11 Mega Project</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+  body {
+    background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 50%, #0d1b2a 100%);
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .logo { font-size: 48px; font-weight: 900; letter-spacing: 2px; margin-bottom: 8px; }
+  .logo span { color: #e4002b; }
+  .tagline { color: #94a3b8; margin-bottom: 40px; font-size: 14px; letter-spacing: 3px; text-transform: uppercase; }
+  .card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 32px 40px;
+    backdrop-filter: blur(10px);
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(34,197,94,0.15); color: #4ade80;
+    padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; margin-bottom: 20px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .info-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14px; }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: #94a3b8; }
+  .info-value { color: #f8fafc; font-family: 'Courier New', monospace; font-weight: 600; }
+  .pipeline { margin-top: 28px; display: flex; justify-content: space-between; gap: 4px; }
+  .stage { flex: 1; text-align: center; font-size: 10px; color: #64748b; }
+  .stage-dot { width: 10px; height: 10px; background: #4ade80; border-radius: 50%; margin: 0 auto 6px; }
+  .footer { margin-top: 24px; font-size: 12px; color: #475569; text-align: center; }
+</style>
+</head>
+<body>
+  <div class="logo">DREAM<span>11</span> MEGA PROJECT</div>
+  <div class="tagline">DevSecOps · GitOps · Kubernetes</div>
+
+  <div class="card">
+    <div class="status-badge"><span class="dot"></span> LIVE ON EKS</div>
+    <div class="info-row"><span class="info-label">Serving Pod</span><span class="info-value" id="pod">-</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="version">-</span></div>
+    <div class="info-row"><span class="info-label">Deployed via</span><span class="info-value">ArgoCD (GitOps)</span></div>
+    <div class="info-row"><span class="info-label">Cluster</span><span class="info-value">Amazon EKS</span></div>
+    <div class="pipeline">
+      <div class="stage"><div class="stage-dot"></div>Sonar</div>
+      <div class="stage"><div class="stage-dot"></div>Trivy</div>
+      <div class="stage"><div class="stage-dot"></div>Docker</div>
+      <div class="stage"><div class="stage-dot"></div>GitOps</div>
+      <div class="stage"><div class="stage-dot"></div>ArgoCD</div>
+      <div class="stage"><div class="stage-dot"></div>Grafana</div>
+    </div>
+  </div>
+  <div class="footer">Built with Jenkins &middot; SonarCloud &middot; Trivy &middot; ArgoCD &middot; Prometheus &middot; Grafana</div>
+
+  <script>
+    fetch('/api/status').then(r => r.json()).then(d => {
+      document.getElementById('pod').textContent = d.pod;
+      document.getElementById('version').textContent = d.version;
+    });
+  </script>
+</body>
+</html>
